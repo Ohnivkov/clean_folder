@@ -1,13 +1,13 @@
 import pathlib
 import os
 import shutil
-
-path = input()  # dir_name
-path_img = path + '/images'
-path_video = path + '/video'
-path_documents = path + '/documents'
-path_archives = path + '/archives'
-path_audio = path + '/audio'
+import sys
+path = sys.argv[1] # dir_name
+path_img = os.path.join(path,'images')
+path_video = os.path.join(path ,'video')
+path_documents = os.path.join(path ,'documents')
+path_archives = os.path.join(path,  'archives')
+path_audio = os.path.join(path,'audio')
 os.chdir(path)
 
 
@@ -79,3 +79,4 @@ list_dir = ['audio', 'video', 'documents', 'archives', 'images']
 
 def main():
     sort_dir(path)
+main()
