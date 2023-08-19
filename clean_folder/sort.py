@@ -79,4 +79,3 @@ list_dir = ['audio', 'video', 'documents', 'archives', 'images']
 
 def main():
     sort_dir(path)
-main()
