@@ -2,6 +2,8 @@ import pathlib
 import os
 import shutil
 import sys
+from threading import Thread
+import time
 path = sys.argv[1] # dir_name
 path_img = os.path.join(path,'images')
 path_video = os.path.join(path ,'video')
@@ -9,8 +11,7 @@ path_documents = os.path.join(path ,'documents')
 path_archives = os.path.join(path,  'archives')
 path_audio = os.path.join(path,'audio')
 os.chdir(path)
-
-
+folders=[]
 def normalize(filename, suffix):  # filename normalization
     global TRANS
     new_filename = ''
@@ -24,29 +25,29 @@ def normalize(filename, suffix):  # filename normalization
             new_filename += '_'
     return new_filename + suffix
 
+def move_file(file):
+    if file.is_file():
+        try:
+            if file.suffix == ".zip" or file.suffix == ".tar" or file.suffix == ".gz":
+                shutil.unpack_archive(file, os.path.join("archives", file.stem))
+                os.remove(file)
+            else:
+                shutil.move(file, os.path.join(path_dict[file.suffix.lower()], file.name))
+                os.rename(
+                    os.path.join(path_dict[file.suffix.lower()], file.name),
+                    os.path.join(
+                        path_dict[file.suffix.lower()], normalize(file.stem, file.suffix)
+                    ),
+                )
+        except KeyError:
+            pass
+def grab_folder(path):
+    path=pathlib.Path(path)
+    for i in path.iterdir():
+        if i.is_dir():
+            folders.append(i)
+            grab_folder(i)
 
-def sort_dir(path):
-    p = pathlib.Path(path)
-    for i in p.iterdir():
-        if i.is_file():
-            try:
-                if i.suffix == '.zip' or i.suffix == '.tar' or i.suffix == '.gz':
-                    shutil.unpack_archive(i, 'archives' + '/' + i.stem)
-                    os.remove(i)
-                else:
-                    shutil.move(i, path_dict[i.suffix.lower()] + '/' + i.name)
-                    os.rename(path_dict[i.suffix.lower()] + '/' + i.name,
-                              path_dict[i.suffix.lower()] + '/' + normalize(i.stem, i.suffix))
-            except KeyError:
-                pass
-        else:
-            if i.name not in list_dir:
-                sort_dir(i)
-
-                if len(os.listdir(i)) == 0:
-                    os.rmdir(i)
-                else:
-                    os.rename(i, path + '/' + normalize(i.stem, i.suffix))
 
 CYRILLIC_SYMBOLS = "абвгдеёжзийклмнопрстуфхцчшщъыьэюяєіїґ"
 TRANSLATION = ("a", "b", "v", "g", "d", "e", "e", "j", "z", "i", "j", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u",
@@ -78,4 +79,13 @@ path_dict = {'.png': path_img,
 list_dir = ['audio', 'video', 'documents', 'archives', 'images']
 
 def main():
-    sort_dir(path)
+    grab_folder(path)
+    treads=[]
+    for folder in folders:
+        tread=Thread(target=move_file,args=(folder,))
+        tread.start()
+        treads.append(tread)
+    [el.join() for el in treads]
+
+
+
